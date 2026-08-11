@@ -2,41 +2,18 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Калькулятор белья</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial; background: #fff; color: #333; height: 100vh; display: flex; }
-  .sidebar { width: 280px; background: #f8f9fa; border-right: 1px solid #e0e0e0; padding: 20px; overflow-y: auto; }
-  .sidebar h3 { margin-bottom: 15px; font-size: 16px; font-weight: 600; }
-  .category { margin-bottom: 20px; }
-  .category-title { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+  body { font-family: Arial; margin: 0; display: flex; height: 100vh; }
+  .sidebar { width: 300px; background: #f5f5f5; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; }
   .cat-item { display: flex; gap: 4px; margin: 4px 0; }
-  .item-btn { flex: 1; padding: 10px 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; text-align: left; font-size: 13px; }
-  .item-btn:hover { background: #f0f0f0; }
-  .item-btn .weight { color: #888; font-size: 11px; }
-  .edit-btn { width: 36px; border: 1px solid #e0e0e0; background: #fff; border-radius: 4px; cursor: pointer; }
-  .edit-btn:hover { background: #f0f0f0; }
-  .main { flex: 1; padding: 30px 40px; overflow-y: auto; }
-  .main h2 { margin-bottom: 20px; font-weight: 500; font-size: 22px; }
-  .selected-row { display: flex; align-items: center; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 4px; flex-wrap: wrap; gap: 8px; }
-  .selected-row .name { flex: 1; font-size: 14px; min-width: 120px; }
-  .lbl { font-size: 12px; color: #888; display: flex; align-items: center; gap: 4px; }
-  .selected-row input { width: 70px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; text-align: center; }
-  .remove { background: none; border: none; color: #999; cursor: pointer; font-size: 18px; }
-  .remove:hover { color: #d32f2f; }
-  .empty-state { color: #999; font-style: italic; padding: 20px; text-align: center; }
-  .calc-btn { width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 15px 0; }
-  .calc-btn:hover { background: #333; }
-  #result { padding: 15px; background: #f5f5f5; border-radius: 4px; font-weight: 500; font-size: 16px; }
-  .add-custom { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
-  .add-custom input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
-  .add-custom button { width: 100%; padding: 8px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px; }
-  @media (max-width: 600px) {
-    body { flex-direction: column; height: auto; }
-    .sidebar { width: 100%; max-height: 35vh; border-right: none; border-bottom: 1px solid #e0e0e0; }
-    .main { padding: 20px; }
-  }
+  .item-btn { flex: 1; padding: 8px; text-align: left; cursor: pointer; }
+  .edit-btn { width: 34px; cursor: pointer; }
+  .main { flex: 1; padding: 30px; overflow-y: auto; }
+  .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; background: #f5f5f5; padding: 10px; }
+  .row input { width: 70px; padding: 5px; text-align: center; }
+  .big { width: 100%; padding: 12px; background: #000; color: #fff; border: none; cursor: pointer; }
+  #result { margin-top: 15px; padding: 15px; background: #eee; }
 </style>
 </head>
 <body>
@@ -44,68 +21,98 @@
 <div class="sidebar">
   <h3>📋 Каталог</h3>
   <div id="catalog"></div>
-  <div class="add-custom">
-    <h3>➕ Добавить своё</h3>
-    <input type="text" id="new_name" placeholder="Название">
-    <input type="number" id="new_weight" placeholder="Вес (кг)" step="0.1">
-    <button onclick="addCustom()">Добавить в каталог</button>
-  </div>
+  <h3>➕ Добавить своё</h3>
+  <input id="new_name" placeholder="Название"><br><br>
+  <input id="new_weight" placeholder="Вес (кг)"><br><br>
+  <button onclick="addCustom()">Добавить</button>
 </div>
 
 <div class="main">
   <h2>⚖️ Вычисление</h2>
-  <div id="selected" class="selected-items">
-    <div class="empty-state">Кликни на позицию в каталоге, чтобы добавить</div>
-  </div>
-  <button class="calc-btn" onclick="poschitat()">Посчитать</button>
+  <div id="selected"><i>Кликни на вещь слева</i></div>
+  <button class="big" onclick="poschitat()">Посчитать</button>
   <div id="result"></div>
 </div>
 
 <script>
-var catalog = {
-  "Постельное": [
-    { name: "Наволочка", weight: 0.2 },
-    { name: "Простынь односпальная", weight: 0.4 },
-    { name: "Простынь двуспальная", weight: 0.6 },
-    { name: "Пододеяльник односпальный", weight: 0.5 },
-    { name: "Пододеяльник двуспальный", weight: 0.7 },
-    { name: "Наматрасник односпальный", weight: 0.8 },
-    { name: "Наматрасник двуспальный", weight: 1.2 },
-    { name: "Топпер односпальный", weight: 1.5 },
-    { name: "Топпер двуспальный", weight: 2.5 }
-  ],
-  "Полотенца": [
-    { name: "Полотенце для ног односпальное", weight: 0.3 },
-    { name: "Полотенце для ног двуспальное", weight: 0.4 },
-    { name: "Полотенце для рук односпальное", weight: 0.2 },
-    { name: "Полотенце для рук двуспальное", weight: 0.3 },
-    { name: "Полотенце большое односпальное", weight: 0.5 },
-    { name: "Полотенце большое двуспальное", weight: 0.7 }
-  ]
-};
-
+var veshi = [
+  {name:"Наволочка", weight:0.2},
+  {name:"Простынь односпальная", weight:0.4},
+  {name:"Простынь двуспальная", weight:0.6},
+  {name:"Пододеяльник односпальный", weight:0.5},
+  {name:"Пододеяльник двуспальный", weight:0.7},
+  {name:"Наматрасник односпальный", weight:0.8},
+  {name:"Наматрасник двуспальный", weight:1.2},
+  {name:"Топпер односпальный", weight:1.5},
+  {name:"Топпер двуспальный", weight:2.5},
+  {name:"Полотенце для ног", weight:0.3},
+  {name:"Полотенце для рук", weight:0.2},
+  {name:"Полотенце большое", weight:0.5}
+];
 var selected = [];
-var nextId = 0;
 
-function renderCatalog() {
-  var box = document.getElementById("catalog");
-  box.innerHTML = "";
-  for (var cat in catalog) {
-    var catDiv = document.createElement("div");
-    catDiv.className = "category";
-    catDiv.innerHTML = '<div class="category-title">' + cat + '</div>';
-    for (var i = 0; i < catalog[cat].length; i++) {
-      (function(cat, i) {
-        var item = catalog[cat][i];
-        var row = document.createElement("div");
-        row.className = "cat-item";
-        var btn = document.createElement("button");
-        btn.className = "item-btn";
-        btn.innerHTML = item.name + '<br><span class="weight">' + item.weight + ' кг/шт</span>';
-        btn.onclick = function() { addToSelected(item); };
-        var edit = document.createElement("button");
-        edit.className = "edit-btn";
-        edit.innerHTML = "✎";
-        edit.onclick = function() {
-          var nw = prompt("Нов
- 
+function renderCatalog(){
+  var html = "";
+  for (var i = 0; i < veshi.length; i++){
+    html += '<div class="cat-item">';
+    html += '<button class="item-btn" onclick="add(' + i + ')">' + veshi[i].name + ' (' + veshi[i].weight + ' кг)</button>';
+    html += '<button class="edit-btn" onclick="editW(' + i + ')">✎</button>';
+    html += '</div>';
+  }
+  document.getElementById("catalog").innerHTML = html;
+}
+
+function editW(i){
+  var nw = prompt("Новый вес для «" + veshi[i].name + "» (кг):", veshi[i].weight);
+  if (nw !== null && !isNaN(parseFloat(nw))){
+    veshi[i].weight = parseFloat(nw);
+    renderCatalog();
+  }
+}
+
+function add(i){
+  selected.push({name: veshi[i].name, weight: veshi[i].weight, count: 0});
+  renderSelected();
+}
+
+function renderSelected(){
+  var html = "";
+  for (var i = 0; i < selected.length; i++){
+    html += '<div class="row">';
+    html += '<span style="flex:1">' + selected[i].name + '</span>';
+    html += 'кг/шт <input type="number" step="0.1" value="' + selected[i].weight + '" onchange="chW(' + i + ', this.value)">';
+    html += 'шт <input type="number" value="' + selected[i].count + '" onchange="chC(' + i + ', this.value)">';
+    html += '<button onclick="del(' + i + ')">×</button>';
+    html += '</div>';
+  }
+  if (selected.length == 0) html = "<i>Кликни на вещь слева</i>";
+  document.getElementById("selected").innerHTML = html;
+}
+
+function chW(i, v){ selected[i].weight = parseFloat(v) || 0; }
+function chC(i, v){ selected[i].count = parseFloat(v) || 0; }
+function del(i){ selected.splice(i, 1); renderSelected(); }
+
+function poschitat(){
+  var sht = 0, kg = 0;
+  for (var i = 0; i < selected.length; i++){
+    sht += selected[i].count;
+    kg += selected[i].count * selected[i].weight;
+  }
+  document.getElementById("result").innerHTML = "📦 Всего: " + sht + " шт, ⚖️ " + kg.toFixed(2) + " кг";
+}
+
+function addCustom(){
+  var n = document.getElementById("new_name").value;
+  var w = parseFloat(document.getElementById("new_weight").value);
+  if (!n || isNaN(w)){ alert("Введи название и вес!"); return; }
+  veshi.push({name: n, weight: w});
+  document.getElementById("new_name").value = "";
+  document.getElementById("new_weight").value = "";
+  renderCatalog();
+}
+
+renderCatalog();
+</script>
+</body>
+</html>
